@@ -3,10 +3,12 @@ import java.util.Scanner;
 
 /**
  * Console user interface for the Parcel Delivery System.
- * Handles user interactions, menus, and input validations.
+ * Demonstrates clean UI/UX, robust input validation (rejecting leading zeroes,
+ * invalid decimal formats, etc.), and seamless navigation with cancellation options.
  */
 public class Main {
 
+    private static final int CANCEL_INT = -1;
     private final ParcelManager parcelManager;
     private final Scanner scanner;
 
@@ -56,34 +58,42 @@ public class Main {
     }
 
     /**
-     * Displays the main menu.
+     * Displays the main menu with a clean visual banner.
      */
     private void displayMenu() {
-        System.out.println("==================================================");
-        System.out.println("            PARCEL DELIVERY SYSTEM                ");
-        System.out.println("==================================================");
-        System.out.println("1. Add Parcel");
-        System.out.println("2. View All Parcels");
-        System.out.println("3. Change Delivery Service");
-        System.out.println("4. Mark as Delivered");
-        System.out.println("5. Exit");
-        System.out.println("==================================================");
+        System.out.println("╔══════════════════════════════════════════════════╗");
+        System.out.println("║            📦 PARCEL DELIVERY SYSTEM             ║");
+        System.out.println("╚══════════════════════════════════════════════════╝");
+        System.out.println("  [1] Add Parcel");
+        System.out.println("  [2] View All Parcels");
+        System.out.println("  [3] Change Delivery Service");
+        System.out.println("  [4] Mark as Delivered");
+        System.out.println("  [5] Exit");
+        System.out.println("════════════════════════════════════════════════════");
     }
 
     /**
-     * Handles adding a new parcel to the system.
+     * Handles adding a new parcel to the system with cancellation support.
      */
     private void handleAddParcel() {
-        System.out.println("--- Add New Parcel ---");
+        System.out.println("┌──────────────────────────────────────────────────┐");
+        System.out.println("│                 ➕ ADD NEW PARCEL                │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.println("Tip: Enter '0' at any prompt to cancel and return to menu.\n");
 
         // 1. Select Parcel Type
         int typeChoice = 0;
         while (typeChoice < 1 || typeChoice > 3) {
             System.out.println("Select Parcel Type:");
-            System.out.println("  1. Document");
-            System.out.println("  2. Box");
-            System.out.println("  3. Fragile");
-            typeChoice = readInt("Enter choice (1-3): ");
+            System.out.println("  [1] Document (Base: Php 50.00 flat, Max: 0.50 kg, 1-100 pages)");
+            System.out.println("  [2] Box      (Base: Php 40.00/kg, Max: 50.00 kg, L x W x H)");
+            System.out.println("  [3] Fragile  (Base: Box fee + Php 100.00, Max: 30.00 kg)");
+            System.out.println("  [0] Cancel");
+            typeChoice = readStrictInt("Enter choice (1-3, or 0 to Cancel): ", true);
+            if (typeChoice == CANCEL_INT) {
+                printCancelled();
+                return;
+            }
             if (typeChoice < 1 || typeChoice > 3) {
                 System.out.println("Invalid parcel type! Please choose 1, 2, or 3.\n");
             }
@@ -92,7 +102,11 @@ public class Main {
         // 2. Tracking Number
         String trackingNumber;
         while (true) {
-            trackingNumber = readInput("Enter Tracking Number (e.g. ABC0001): ").toUpperCase();
+            trackingNumber = readInput("Enter Tracking Number (e.g. ABC0001) [0 to Cancel]: ").toUpperCase();
+            if (isCancel(trackingNumber)) {
+                printCancelled();
+                return;
+            }
             if (!trackingNumber.matches("^ABC\\d{4}$")) {
                 System.out.println("Invalid tracking number! Must be 'ABC' followed by 4 digits (e.g., ABC0001).");
                 continue;
@@ -107,7 +121,11 @@ public class Main {
         // 3. Receiver Name
         String receiverName;
         while (true) {
-            receiverName = readInput("Enter Receiver Name: ");
+            receiverName = readInput("Enter Receiver Name [0 to Cancel]: ");
+            if (isCancel(receiverName)) {
+                printCancelled();
+                return;
+            }
             if (receiverName.trim().isEmpty()) {
                 System.out.println("Receiver name cannot be empty!");
                 continue;
@@ -122,7 +140,11 @@ public class Main {
                 : FragileParcel.MAX_FRAGILE_WEIGHT;
 
         while (true) {
-            weight = readDouble("Enter Weight in kg: ");
+            weight = readStrictDouble("Enter Weight in kg [0 to Cancel]: ", true);
+            if (Double.isNaN(weight)) {
+                printCancelled();
+                return;
+            }
             if (weight <= 0) {
                 System.out.println("Weight must be greater than 0 kg!");
                 continue;
@@ -143,7 +165,11 @@ public class Main {
 
         if (typeChoice == 1) { // Document
             while (true) {
-                numberOfPages = readInt("Enter Number of Pages (1 to 100): ");
+                numberOfPages = readStrictInt("Enter Number of Pages (1 to 100) [0 to Cancel]: ", true);
+                if (numberOfPages == CANCEL_INT) {
+                    printCancelled();
+                    return;
+                }
                 if (numberOfPages < DocumentParcel.MIN_PAGES || numberOfPages > DocumentParcel.MAX_PAGES) {
                     System.out.println("Number of pages must be between 1 and 100!");
                     continue;
@@ -152,7 +178,11 @@ public class Main {
             }
         } else { // Box or Fragile
             while (true) {
-                length = readInt("Enter Length in cm: ");
+                length = readStrictInt("Enter Length in cm [0 to Cancel]: ", true);
+                if (length == CANCEL_INT) {
+                    printCancelled();
+                    return;
+                }
                 if (length <= 0) {
                     System.out.println("Length must be greater than 0!");
                     continue;
@@ -160,7 +190,11 @@ public class Main {
                 break;
             }
             while (true) {
-                width = readInt("Enter Width in cm: ");
+                width = readStrictInt("Enter Width in cm [0 to Cancel]: ", true);
+                if (width == CANCEL_INT) {
+                    printCancelled();
+                    return;
+                }
                 if (width <= 0) {
                     System.out.println("Width must be greater than 0!");
                     continue;
@@ -168,7 +202,11 @@ public class Main {
                 break;
             }
             while (true) {
-                height = readInt("Enter Height in cm: ");
+                height = readStrictInt("Enter Height in cm [0 to Cancel]: ", true);
+                if (height == CANCEL_INT) {
+                    printCancelled();
+                    return;
+                }
                 if (height <= 0) {
                     System.out.println("Height must be greater than 0!");
                     continue;
@@ -178,7 +216,11 @@ public class Main {
 
             if (typeChoice == 3) { // Fragile
                 while (true) {
-                    handlingNote = readInput("Enter Handling Note: ");
+                    handlingNote = readInput("Enter Handling Note [0 to Cancel]: ");
+                    if (isCancel(handlingNote)) {
+                        printCancelled();
+                        return;
+                    }
                     if (handlingNote.trim().isEmpty()) {
                         System.out.println("Handling note cannot be empty!");
                         continue;
@@ -202,10 +244,15 @@ public class Main {
         DeliveryServiceStrategy deliveryService = null;
         while (deliveryService == null) {
             System.out.println("Select Delivery Service:");
-            System.out.println("  1. Standard");
-            System.out.println("  2. Express");
-            System.out.println("  3. Same Day");
-            int serviceChoice = readInt("Enter choice (1-3): ");
+            System.out.println("  [1] Standard - Base fee");
+            System.out.println("  [2] Express  - Base fee × 1.5");
+            System.out.println("  [3] Same Day - (Base fee × 2) + Php 100 (Max 10 kg)");
+            System.out.println("  [0] Cancel");
+            int serviceChoice = readStrictInt("Enter choice (1-3, or 0 to Cancel): ", true);
+            if (serviceChoice == CANCEL_INT) {
+                printCancelled();
+                return;
+            }
 
             switch (serviceChoice) {
                 case 1:
@@ -243,16 +290,19 @@ public class Main {
 
             parcelManager.addParcel(parcel);
             System.out.printf("Parcel added successfully! Delivery fee: Php %.2f%n", parcel.getDeliveryFee());
+            displayParcelReceipt(parcel);
         } catch (InvalidParcelException | DeliveryServiceNotAllowedException | DuplicateTrackingNumberException e) {
             System.out.println("Error adding parcel: " + e.getMessage());
         }
     }
 
     /**
-     * Displays all parcels in a formatted table.
+     * Displays all parcels in a formatted table with summary statistics.
      */
     private void handleViewAllParcels() {
-        System.out.println("--- All Registered Parcels ---");
+        System.out.println("┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+        System.out.println("│                                       📦 ALL REGISTERED PARCELS                                        │");
+        System.out.println("└────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
         List<Parcel> parcels = parcelManager.getAllParcels();
 
         if (parcels.isEmpty()) {
@@ -266,6 +316,10 @@ public class Main {
                 "Tracking Number", "Type", "Receiver", "Chargeable Weight", "Service", "Delivery Fee", "Status");
         System.out.println(border);
 
+        int pendingCount = 0;
+        int deliveredCount = 0;
+        double totalFees = 0.0;
+
         for (Parcel p : parcels) {
             String chargeableWeightStr = formatChargeableWeight(p.getChargeableWeight());
             String feeStr = String.format("Php %.2f", p.getDeliveryFee());
@@ -277,16 +331,31 @@ public class Main {
                     p.getDeliveryService().getName(),
                     feeStr,
                     p.getStatus().getDisplayName());
+
+            if (p.isDelivered()) {
+                deliveredCount++;
+            } else {
+                pendingCount++;
+            }
+            totalFees += p.getDeliveryFee();
         }
         System.out.println(border);
+        System.out.printf("Summary: %d Total Parcel(s) | %d Pending | %d Delivered | Total Expected Fees: Php %.2f%n",
+                parcels.size(), pendingCount, deliveredCount, totalFees);
     }
 
     /**
      * Changes the delivery service of a pending parcel.
      */
     private void handleChangeDeliveryService() {
-        System.out.println("--- Change Delivery Service ---");
-        String trackingNumber = readInput("Enter Tracking Number: ").toUpperCase();
+        System.out.println("┌──────────────────────────────────────────────────┐");
+        System.out.println("│             🔄 CHANGE DELIVERY SERVICE           │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        String trackingNumber = readInput("Enter Tracking Number [0 to Cancel]: ").toUpperCase();
+        if (isCancel(trackingNumber)) {
+            printCancelled();
+            return;
+        }
 
         Parcel parcel = parcelManager.findParcel(trackingNumber);
         if (parcel == null) {
@@ -299,16 +368,22 @@ public class Main {
             return;
         }
 
-        System.out.printf("Current Service: %s | Current Fee: Php %.2f%n",
+        System.out.printf("Parcel: %s (%s) | Current Service: %s | Current Fee: Php %.2f%n",
+                parcel.getTrackingNumber(), parcel.getParcelType(),
                 parcel.getDeliveryService().getName(), parcel.getDeliveryFee());
         System.out.println("Select New Delivery Service:");
-        System.out.println("  1. Standard");
-        System.out.println("  2. Express");
-        System.out.println("  3. Same Day");
+        System.out.println("  [1] Standard");
+        System.out.println("  [2] Express");
+        System.out.println("  [3] Same Day");
+        System.out.println("  [0] Cancel (keep current service)");
 
         DeliveryServiceStrategy newService = null;
         while (newService == null) {
-            int choice = readInt("Enter choice (1-3): ");
+            int choice = readStrictInt("Enter choice (1-3, or 0 to Cancel): ", true);
+            if (choice == CANCEL_INT) {
+                printCancelled();
+                return;
+            }
             switch (choice) {
                 case 1:
                     newService = new StandardDeliveryStrategy();
@@ -340,8 +415,14 @@ public class Main {
      * Marks a pending parcel as delivered.
      */
     private void handleMarkAsDelivered() {
-        System.out.println("--- Mark as Delivered ---");
-        String trackingNumber = readInput("Enter Tracking Number: ").toUpperCase();
+        System.out.println("┌──────────────────────────────────────────────────┐");
+        System.out.println("│               📬 MARK AS DELIVERED               │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        String trackingNumber = readInput("Enter Tracking Number [0 to Cancel]: ").toUpperCase();
+        if (isCancel(trackingNumber)) {
+            printCancelled();
+            return;
+        }
 
         Parcel parcel = parcelManager.findParcel(trackingNumber);
         if (parcel == null) {
@@ -376,29 +457,88 @@ public class Main {
     }
 
     /**
-     * Helper to safely read an integer.
+     * Reads a strict integer from the console, rejecting leading zeroes (e.g. '01', '001')
+     * and non-integer inputs.
+     *
+     * @param prompt      prompt message
+     * @param allowCancel if true, entering '0' returns CANCEL_INT (-1)
+     * @return the parsed positive integer or CANCEL_INT if cancelled
      */
-    private int readInt(String prompt) {
+    private int readStrictInt(String prompt, boolean allowCancel) {
         while (true) {
             String input = readInput(prompt);
+
+            if (allowCancel && isCancel(input)) {
+                return CANCEL_INT;
+            }
+
+            // Check for illegal leading zeroes (e.g. 01, 001, 007)
+            if (input.matches("^0\\d+$")) {
+                System.out.println("Invalid input! Leading zeroes (e.g., '01', '001') are not allowed. Please enter a valid number.");
+                continue;
+            }
+
+            if (!input.matches("^[1-9]\\d*$")) {
+                if (input.equals("0")) {
+                    System.out.println("Value must be greater than 0!");
+                } else if (input.startsWith("-")) {
+                    System.out.println("Negative numbers are not allowed!");
+                } else {
+                    System.out.println("Invalid input! Please enter a valid whole number without leading zeros.");
+                }
+                continue;
+            }
+
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input! Please enter a valid integer.");
+                System.out.println("Number is too large! Please enter a valid number.");
             }
         }
     }
 
     /**
-     * Helper to safely read a double, rejecting NaN and Infinities.
+     * Reads a strict double from the console, rejecting leading zeroes (e.g. '01', '001', '01.5', '00.5'),
+     * malformed decimal points ('.5', '5.'), and special non-finite numbers (NaN, Infinity).
+     *
+     * @param prompt      prompt message
+     * @param allowCancel if true, entering '0' returns Double.NaN to signal cancellation
+     * @return the parsed positive decimal number or Double.NaN if cancelled
      */
-    private double readDouble(String prompt) {
+    private double readStrictDouble(String prompt, boolean allowCancel) {
         while (true) {
             String input = readInput(prompt);
+
+            if (allowCancel && isCancel(input)) {
+                return Double.NaN;
+            }
+
+            // Check for illegal leading zeroes (e.g. 01, 001, 01.5, 00.5)
+            if (input.matches("^0\\d+(\\.\\d+)?$") || input.matches("^0{2,}\\..*$")) {
+                System.out.println("Invalid input! Leading zeroes (e.g., '01', '001') are not allowed. Please enter a valid decimal number.");
+                continue;
+            }
+
+            // Check for misplaced decimal point (e.g. .5 or 5.)
+            if (input.startsWith(".") || input.endsWith(".")) {
+                System.out.println("Invalid input! Please use standard decimal format (e.g. 0.5 instead of .5).");
+                continue;
+            }
+
+            // Strict positive decimal regex: must be 0.xxx or 1-9xxx(.xxx)
+            if (!input.matches("^(0\\.\\d+|[1-9]\\d*(\\.\\d+)?)$")) {
+                if (input.equals("0") || input.equals("0.0") || input.equals("0.00")) {
+                    System.out.println("Weight must be greater than 0 kg!");
+                } else {
+                    System.out.println("Invalid input! Please enter a valid positive decimal number without leading zeros.");
+                }
+                continue;
+            }
+
             try {
                 double val = Double.parseDouble(input);
-                if (Double.isNaN(val) || Double.isInfinite(val)) {
-                    System.out.println("Invalid input! Please enter a valid finite decimal number.");
+                if (Double.isNaN(val) || Double.isInfinite(val) || val <= 0) {
+                    System.out.println("Weight must be greater than 0 kg!");
                     continue;
                 }
                 return val;
@@ -406,6 +546,20 @@ public class Main {
                 System.out.println("Invalid input! Please enter a valid decimal number.");
             }
         }
+    }
+
+    /**
+     * Checks if user entered a cancellation keyword.
+     */
+    private boolean isCancel(String input) {
+        return input != null && (input.equals("0") || input.equalsIgnoreCase("cancel") || input.equalsIgnoreCase("back"));
+    }
+
+    /**
+     * Prints a consistent cancellation notice.
+     */
+    private void printCancelled() {
+        System.out.println(">> Operation cancelled. Returning to main menu.\n");
     }
 
     /**
@@ -422,6 +576,24 @@ public class Main {
             }
             return str + " kg";
         }
+    }
+
+    /**
+     * Displays a clean formatted receipt card for a parcel.
+     */
+    private void displayParcelReceipt(Parcel parcel) {
+        System.out.println("┌──────────────────────────────────────────────────┐");
+        System.out.println("│                  PARCEL RECEIPT                  │");
+        System.out.println("├──────────────────────────────────────────────────┤");
+        System.out.printf("│ Tracking Number   : %-28s │%n", parcel.getTrackingNumber());
+        System.out.printf("│ Parcel Type       : %-28s │%n", parcel.getParcelType());
+        System.out.printf("│ Receiver          : %-28s │%n", truncate(parcel.getReceiverName(), 28));
+        System.out.printf("│ Chargeable Weight : %-28s │%n", formatChargeableWeight(parcel.getChargeableWeight()));
+        System.out.printf("│ Delivery Service  : %-28s │%n", parcel.getDeliveryService().getName());
+        System.out.printf("│ Base Fee          : Php %-24.2f │%n", parcel.calculateBaseFee());
+        System.out.printf("│ Delivery Fee      : Php %-24.2f │%n", parcel.getDeliveryFee());
+        System.out.printf("│ Status            : %-28s │%n", parcel.getStatus().getDisplayName());
+        System.out.println("└──────────────────────────────────────────────────┘");
     }
 
     /**
