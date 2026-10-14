@@ -21,20 +21,24 @@ public abstract class Parcel {
      */
     public Parcel(String trackingNumber, String receiverName, double weight, DeliveryServiceStrategy deliveryService)
             throws InvalidParcelException {
-        if (trackingNumber == null || !trackingNumber.matches("^ABC\\d{4}$")) {
+        if (trackingNumber == null) {
+            throw new InvalidParcelException("Tracking number cannot be null!");
+        }
+        String trimmedTracking = trackingNumber.trim().toUpperCase();
+        if (!trimmedTracking.matches("^ABC\\d{4}$")) {
             throw new InvalidParcelException("Invalid tracking number! Must be 'ABC' followed by 4 digits (e.g., ABC0001).");
         }
         if (receiverName == null || receiverName.trim().isEmpty()) {
             throw new InvalidParcelException("Receiver name cannot be empty!");
         }
-        if (weight <= 0) {
+        if (Double.isNaN(weight) || Double.isInfinite(weight) || weight <= 0) {
             throw new InvalidParcelException("Weight must be greater than 0 kg!");
         }
         if (deliveryService == null) {
             throw new InvalidParcelException("Delivery service must be specified!");
         }
 
-        this.trackingNumber = trackingNumber;
+        this.trackingNumber = trimmedTracking;
         this.receiverName = receiverName.trim();
         this.weight = weight;
         this.deliveryService = deliveryService;

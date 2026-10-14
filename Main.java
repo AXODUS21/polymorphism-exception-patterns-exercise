@@ -193,8 +193,9 @@ public class Main {
         if (typeChoice == 1) {
             chargeableWeight = weight;
         } else {
-            double volWeight = ((double) length * width * height) / BoxParcel.VOLUMETRIC_DIVISOR;
-            chargeableWeight = Math.ceil(Math.max(weight, volWeight));
+            double volWeight = ((double) length * (double) width * (double) height) / BoxParcel.VOLUMETRIC_DIVISOR;
+            double roundedMax = Math.round(Math.max(weight, volWeight) * 1e8) / 1e8;
+            chargeableWeight = Math.ceil(roundedMax);
         }
 
         // 6. Select Delivery Service
@@ -266,7 +267,7 @@ public class Main {
         System.out.println(border);
 
         for (Parcel p : parcels) {
-            String chargeableWeightStr = String.format("%.2f kg", p.getChargeableWeight());
+            String chargeableWeightStr = formatChargeableWeight(p.getChargeableWeight());
             String feeStr = String.format("Php %.2f", p.getDeliveryFee());
             System.out.printf("| %-15s | %-10s | %-20s | %-18s | %-12s | %-16s | %-10s |%n",
                     p.getTrackingNumber(),
@@ -305,21 +306,23 @@ public class Main {
         System.out.println("  2. Express");
         System.out.println("  3. Same Day");
 
-        int choice = readInt("Enter choice (1-3): ");
-        DeliveryServiceStrategy newService;
-        switch (choice) {
-            case 1:
-                newService = new StandardDeliveryStrategy();
-                break;
-            case 2:
-                newService = new ExpressDeliveryStrategy();
-                break;
-            case 3:
-                newService = new SameDayDeliveryStrategy();
-                break;
-            default:
-                System.out.println("Invalid service option! Operation cancelled.");
-                return;
+        DeliveryServiceStrategy newService = null;
+        while (newService == null) {
+            int choice = readInt("Enter choice (1-3): ");
+            switch (choice) {
+                case 1:
+                    newService = new StandardDeliveryStrategy();
+                    break;
+                case 2:
+                    newService = new ExpressDeliveryStrategy();
+                    break;
+                case 3:
+                    newService = new SameDayDeliveryStrategy();
+                    break;
+                default:
+                    System.out.println("Invalid service option! Please choose 1, 2, or 3.\n");
+                    break;
+            }
         }
 
         try {
@@ -387,16 +390,37 @@ public class Main {
     }
 
     /**
-     * Helper to safely read a double.
+     * Helper to safely read a double, rejecting NaN and Infinities.
      */
     private double readDouble(String prompt) {
         while (true) {
             String input = readInput(prompt);
             try {
-                return Double.parseDouble(input);
+                double val = Double.parseDouble(input);
+                if (Double.isNaN(val) || Double.isInfinite(val)) {
+                    System.out.println("Invalid input! Please enter a valid finite decimal number.");
+                    continue;
+                }
+                return val;
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input! Please enter a valid decimal number.");
             }
+        }
+    }
+
+    /**
+     * Formats chargeable weight cleanly without unnecessary trailing zeros on whole numbers.
+     * Examples: 3.0 -> "3 kg", 0.4 -> "0.4 kg", 0.25 -> "0.25 kg".
+     */
+    private String formatChargeableWeight(double weight) {
+        if (weight == (long) weight) {
+            return String.format("%d kg", (long) weight);
+        } else {
+            String str = String.format(java.util.Locale.US, "%.2f", weight);
+            if (str.endsWith("0")) {
+                str = str.substring(0, str.length() - 1);
+            }
+            return str + " kg";
         }
     }
 

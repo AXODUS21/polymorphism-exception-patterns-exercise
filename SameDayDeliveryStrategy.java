@@ -15,7 +15,8 @@ public class SameDayDeliveryStrategy implements DeliveryServiceStrategy {
 
     @Override
     public void validateEligibility(double chargeableWeight) throws DeliveryServiceNotAllowedException {
-        if (chargeableWeight > MAX_CHARGEABLE_WEIGHT) {
+        double normalizedWeight = Math.round(chargeableWeight * 1e8) / 1e8;
+        if (normalizedWeight > MAX_CHARGEABLE_WEIGHT) {
             throw new DeliveryServiceNotAllowedException("Same Day delivery is only for parcels up to 10 kg!");
         }
     }

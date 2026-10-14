@@ -22,6 +22,7 @@ public class ParcelSystemTest {
         testParcelManagerOperations();
         testChangeDeliveryServiceWorkflow();
         testMarkAsDeliveredWorkflow();
+        testEdgeCasesAndInputHandling();
 
         System.out.println("\n-------------------------------------------");
         System.out.printf("Test Summary: %d/%d passed.%n", passedTests, totalTests);
@@ -348,6 +349,56 @@ public class ParcelSystemTest {
             assertTrue(caughtChangeOnDelivered, "Changing service on delivered parcel throws ParcelAlreadyDeliveredException");
         } catch (Exception e) {
             assertTrue(false, "Mark as delivered test failed: " + e.getMessage());
+        }
+    }
+
+    private static void testEdgeCasesAndInputHandling() {
+        // 1. NaN weight validation
+        boolean caughtNaN = false;
+        try {
+            new DocumentParcel("ABC0080", "Tester", Double.NaN, new StandardDeliveryStrategy(), 10);
+        } catch (InvalidParcelException e) {
+            caughtNaN = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtNaN, "Double.NaN weight throws InvalidParcelException");
+
+        // 2. Infinity weight validation
+        boolean caughtInfinity = false;
+        try {
+            new BoxParcel("ABC0081", "Tester", Double.POSITIVE_INFINITY, new StandardDeliveryStrategy(), 10, 10, 10);
+        } catch (InvalidParcelException e) {
+            caughtInfinity = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtInfinity, "Double.POSITIVE_INFINITY weight throws InvalidParcelException");
+
+        // 3. Lowercase and whitespace tracking number normalization
+        try {
+            DocumentParcel doc = new DocumentParcel("  abc0082  ", "Tester", 0.4, new StandardDeliveryStrategy(), 10);
+            assertEquals("ABC0082", doc.getTrackingNumber(), "Tracking number trimmed and uppercase normalized");
+        } catch (Exception e) {
+            assertTrue(false, "Tracking normalization failed: " + e.getMessage());
+        }
+
+        // 4. Large dimensions that would overflow int multiplication
+        try {
+            BoxParcel largeBox = new BoxParcel("ABC0083", "Tester", 5.0, new StandardDeliveryStrategy(), 2000, 2000, 100);
+            // 2000 * 2000 * 100 = 400,000,000 / 3500 = 114285.71
+            assertTrue(largeBox.getVolumetricWeight() > 0, "Large dimensions do not overflow int");
+        } catch (Exception e) {
+            assertTrue(false, "Large box failed: " + e.getMessage());
+        }
+
+        // 5. Floating point precision near integer boundary
+        try {
+            // Actual weight = 2.0. Volumetric weight = 7000 / 3500 = 2.0.
+            BoxParcel boxPrecision = new BoxParcel("ABC0084", "Tester", 2.0, new StandardDeliveryStrategy(), 70, 50, 2);
+            assertEquals(2.0, boxPrecision.getChargeableWeight(), 0.001, "Exact 2.0 kg rounds to 2, not 3");
+        } catch (Exception e) {
+            assertTrue(false, "Precision test failed: " + e.getMessage());
         }
     }
 }

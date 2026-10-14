@@ -50,13 +50,15 @@ public class BoxParcel extends Parcel {
      * @return volumetric weight in kg
      */
     public double getVolumetricWeight() {
-        return ((double) length * width * height) / VOLUMETRIC_DIVISOR;
+        return ((double) length * (double) width * (double) height) / VOLUMETRIC_DIVISOR;
     }
 
     @Override
     public double getChargeableWeight() {
         double maxWeight = Math.max(getWeight(), getVolumetricWeight());
-        return Math.ceil(maxWeight);
+        // Protect against floating-point precision artifacts near whole numbers (e.g. 2.0000000000000004)
+        double roundedMax = Math.round(maxWeight * 1e8) / 1e8;
+        return Math.ceil(roundedMax);
     }
 
     @Override
