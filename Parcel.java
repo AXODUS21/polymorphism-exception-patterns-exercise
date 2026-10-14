@@ -31,6 +31,13 @@ public abstract class Parcel {
         if (receiverName == null || receiverName.trim().isEmpty()) {
             throw new InvalidParcelException("Receiver name cannot be empty!");
         }
+        String trimmedReceiver = receiverName.trim();
+        if (trimmedReceiver.length() > 50) {
+            throw new InvalidParcelException("Receiver name cannot exceed 50 characters!");
+        }
+        if (!trimmedReceiver.matches(".*[a-zA-Z].*")) {
+            throw new InvalidParcelException("Receiver name must contain at least one letter!");
+        }
         if (Double.isNaN(weight) || Double.isInfinite(weight) || weight <= 0) {
             throw new InvalidParcelException("Weight must be greater than 0 kg!");
         }
@@ -39,7 +46,7 @@ public abstract class Parcel {
         }
 
         this.trackingNumber = trimmedTracking;
-        this.receiverName = receiverName.trim();
+        this.receiverName = trimmedReceiver;
         this.weight = weight;
         this.deliveryService = deliveryService;
         this.status = ParcelStatus.PENDING;
@@ -84,8 +91,13 @@ public abstract class Parcel {
      *
      * @param newService the new delivery service strategy
      * @throws DeliveryServiceNotAllowedException if the parcel is ineligible
+     * @throws ParcelAlreadyDeliveredException if the parcel is already delivered
      */
-    public void setDeliveryService(DeliveryServiceStrategy newService) throws DeliveryServiceNotAllowedException {
+    public void setDeliveryService(DeliveryServiceStrategy newService)
+            throws DeliveryServiceNotAllowedException, ParcelAlreadyDeliveredException {
+        if (isDelivered()) {
+            throw new ParcelAlreadyDeliveredException("Parcel already delivered!");
+        }
         if (newService == null) {
             throw new IllegalArgumentException("Delivery service cannot be null.");
         }
@@ -126,6 +138,9 @@ public abstract class Parcel {
     }
 
     public void setStatus(ParcelStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Parcel status cannot be null.");
+        }
         this.status = status;
     }
 

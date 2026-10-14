@@ -23,6 +23,7 @@ public class ParcelSystemTest {
         testChangeDeliveryServiceWorkflow();
         testMarkAsDeliveredWorkflow();
         testEdgeCasesAndInputHandling();
+        testNewInputValidations();
 
         System.out.println("\n-------------------------------------------");
         System.out.printf("Test Summary: %d/%d passed.%n", passedTests, totalTests);
@@ -400,5 +401,90 @@ public class ParcelSystemTest {
         } catch (Exception e) {
             assertTrue(false, "Precision test failed: " + e.getMessage());
         }
+    }
+
+    private static void testNewInputValidations() {
+        // 1. Receiver name exceeding 50 characters
+        boolean caughtLongName = false;
+        try {
+            String longName = "A".repeat(51);
+            new DocumentParcel("ABC0090", longName, 0.4, new StandardDeliveryStrategy(), 10);
+        } catch (InvalidParcelException e) {
+            caughtLongName = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtLongName, "Receiver name exceeding 50 chars throws InvalidParcelException");
+
+        // 2. Receiver name without letters (purely numeric or symbols)
+        boolean caughtNoLettersName = false;
+        try {
+            new DocumentParcel("ABC0091", "123456", 0.4, new StandardDeliveryStrategy(), 10);
+        } catch (InvalidParcelException e) {
+            caughtNoLettersName = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtNoLettersName, "Receiver name without letters throws InvalidParcelException");
+
+        // 3. BoxParcel dimension exceeding MAX_DIMENSION (3000 cm)
+        boolean caughtExcessDimension = false;
+        try {
+            new BoxParcel("ABC0092", "Tester", 5.0, new StandardDeliveryStrategy(), 3001, 10, 10);
+        } catch (InvalidParcelException e) {
+            caughtExcessDimension = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtExcessDimension, "BoxParcel dimension exceeding 3000 cm throws InvalidParcelException");
+
+        // 4. FragileParcel handling note exceeding 100 characters
+        boolean caughtLongNote = false;
+        try {
+            String longNote = "X".repeat(101);
+            new FragileParcel("ABC0093", "Tester", 5.0, new StandardDeliveryStrategy(), 10, 10, 10, longNote);
+        } catch (InvalidParcelException e) {
+            caughtLongNote = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtLongNote, "FragileParcel note exceeding 100 characters throws InvalidParcelException");
+
+        // 5. Parcel.setStatus null validation
+        boolean caughtNullStatus = false;
+        try {
+            DocumentParcel doc = new DocumentParcel("ABC0094", "Tester", 0.4, new StandardDeliveryStrategy(), 10);
+            doc.setStatus(null);
+        } catch (IllegalArgumentException e) {
+            caughtNullStatus = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtNullStatus, "Parcel.setStatus(null) throws IllegalArgumentException");
+
+        // 6. Parcel.setDeliveryService on already delivered parcel
+        boolean caughtSetServiceOnDelivered = false;
+        try {
+            DocumentParcel doc = new DocumentParcel("ABC0095", "Tester", 0.4, new StandardDeliveryStrategy(), 10);
+            doc.markAsDelivered();
+            doc.setDeliveryService(new ExpressDeliveryStrategy());
+        } catch (ParcelAlreadyDeliveredException e) {
+            caughtSetServiceOnDelivered = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtSetServiceOnDelivered, "Parcel.setDeliveryService on delivered parcel throws ParcelAlreadyDeliveredException");
+
+        // 7. ParcelManager.changeDeliveryService null service check
+        boolean caughtNullService = false;
+        try {
+            ParcelManager manager = ParcelManager.getInstance();
+            manager.changeDeliveryService("ABC0050", null);
+        } catch (IllegalArgumentException e) {
+            caughtNullService = true;
+        } catch (Exception e) {
+            // unexpected
+        }
+        assertTrue(caughtNullService, "ParcelManager.changeDeliveryService with null service throws IllegalArgumentException");
     }
 }

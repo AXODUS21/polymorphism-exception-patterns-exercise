@@ -11,6 +11,7 @@ public class BoxParcel extends Parcel {
     public static final double MAX_WEIGHT = 50.0;
     public static final double RATE_PER_KG = 40.0;
     public static final double VOLUMETRIC_DIVISOR = 3500.0;
+    public static final int MAX_DIMENSION = 3000;
 
     private final int length;
     private final int width;
@@ -33,6 +34,9 @@ public class BoxParcel extends Parcel {
         }
         if (length <= 0 || width <= 0 || height <= 0) {
             throw new InvalidParcelException("Dimensions (length, width, height) must be greater than 0 cm!");
+        }
+        if (length > MAX_DIMENSION || width > MAX_DIMENSION || height > MAX_DIMENSION) {
+            throw new InvalidParcelException("Dimensions (length, width, height) cannot exceed " + MAX_DIMENSION + " cm!");
         }
 
         this.length = length;

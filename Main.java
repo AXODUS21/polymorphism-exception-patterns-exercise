@@ -130,6 +130,14 @@ public class Main {
                 System.out.println("Receiver name cannot be empty!");
                 continue;
             }
+            if (receiverName.trim().length() > 50) {
+                System.out.println("Receiver name cannot exceed 50 characters!");
+                continue;
+            }
+            if (!receiverName.trim().matches(".*[a-zA-Z].*")) {
+                System.out.println("Receiver name must contain at least one letter!");
+                continue;
+            }
             break;
         }
 
@@ -147,6 +155,10 @@ public class Main {
             }
             if (weight <= 0) {
                 System.out.println("Weight must be greater than 0 kg!");
+                continue;
+            }
+            if (weight < 0.001) {
+                System.out.println("Weight must be at least 0.001 kg (1 gram)!");
                 continue;
             }
             if (weight > maxWeightForType) {
@@ -187,6 +199,10 @@ public class Main {
                     System.out.println("Length must be greater than 0!");
                     continue;
                 }
+                if (length > BoxParcel.MAX_DIMENSION) {
+                    System.out.println("Length cannot exceed " + BoxParcel.MAX_DIMENSION + " cm!");
+                    continue;
+                }
                 break;
             }
             while (true) {
@@ -197,6 +213,10 @@ public class Main {
                 }
                 if (width <= 0) {
                     System.out.println("Width must be greater than 0!");
+                    continue;
+                }
+                if (width > BoxParcel.MAX_DIMENSION) {
+                    System.out.println("Width cannot exceed " + BoxParcel.MAX_DIMENSION + " cm!");
                     continue;
                 }
                 break;
@@ -211,6 +231,10 @@ public class Main {
                     System.out.println("Height must be greater than 0!");
                     continue;
                 }
+                if (height > BoxParcel.MAX_DIMENSION) {
+                    System.out.println("Height cannot exceed " + BoxParcel.MAX_DIMENSION + " cm!");
+                    continue;
+                }
                 break;
             }
 
@@ -223,6 +247,14 @@ public class Main {
                     }
                     if (handlingNote.trim().isEmpty()) {
                         System.out.println("Handling note cannot be empty!");
+                        continue;
+                    }
+                    if (handlingNote.trim().length() < 3) {
+                        System.out.println("Handling note must be at least 3 characters long!");
+                        continue;
+                    }
+                    if (handlingNote.trim().length() > FragileParcel.MAX_NOTE_LENGTH) {
+                        System.out.println("Handling note cannot exceed " + FragileParcel.MAX_NOTE_LENGTH + " characters!");
                         continue;
                     }
                     break;
@@ -356,6 +388,10 @@ public class Main {
             printCancelled();
             return;
         }
+        if (!trackingNumber.matches("^ABC\\d{4}$")) {
+            System.out.println("Invalid tracking number format! Must be 'ABC' followed by 4 digits (e.g., ABC0001).");
+            return;
+        }
 
         Parcel parcel = parcelManager.findParcel(trackingNumber);
         if (parcel == null) {
@@ -400,6 +436,12 @@ public class Main {
             }
         }
 
+        if (parcel.getDeliveryService().getName().equalsIgnoreCase(newService.getName())) {
+            System.out.printf("Parcel %s is already using the %s delivery service.%n",
+                    parcel.getTrackingNumber(), newService.getName());
+            return;
+        }
+
         try {
             parcelManager.changeDeliveryService(trackingNumber, newService);
             System.out.printf("Delivery service changed! New fee: Php %.2f%n", parcel.getDeliveryFee());
@@ -421,6 +463,10 @@ public class Main {
         String trackingNumber = readInput("Enter Tracking Number [0 to Cancel]: ").toUpperCase();
         if (isCancel(trackingNumber)) {
             printCancelled();
+            return;
+        }
+        if (!trackingNumber.matches("^ABC\\d{4}$")) {
+            System.out.println("Invalid tracking number format! Must be 'ABC' followed by 4 digits (e.g., ABC0001).");
             return;
         }
 
@@ -522,6 +568,12 @@ public class Main {
             // Check for misplaced decimal point (e.g. .5 or 5.)
             if (input.startsWith(".") || input.endsWith(".")) {
                 System.out.println("Invalid input! Please use standard decimal format (e.g. 0.5 instead of .5).");
+                continue;
+            }
+
+            // Check decimal places (standard scales measure up to 3 decimal places e.g., 0.25, 1.125)
+            if (input.contains(".") && input.substring(input.indexOf('.') + 1).length() > 3) {
+                System.out.println("Invalid input! Weight cannot have more than 3 decimal places (e.g., 0.25 or 1.5).");
                 continue;
             }
 

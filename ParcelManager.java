@@ -96,6 +96,9 @@ public class ParcelManager {
      */
     public synchronized void changeDeliveryService(String trackingNumber, DeliveryServiceStrategy newService)
             throws ParcelNotFoundException, ParcelAlreadyDeliveredException, DeliveryServiceNotAllowedException {
+        if (newService == null) {
+            throw new IllegalArgumentException("New delivery service cannot be null.");
+        }
         Parcel parcel = findParcel(trackingNumber);
         if (parcel == null) {
             throw new ParcelNotFoundException("Parcel not found!");
