@@ -383,6 +383,12 @@ public class Main {
         System.out.println("┌──────────────────────────────────────────────────┐");
         System.out.println("│             🔄 CHANGE DELIVERY SERVICE           │");
         System.out.println("└──────────────────────────────────────────────────┘");
+
+        if (parcelManager.isEmpty()) {
+            System.out.println("No parcels found in the system. Please add a parcel first.");
+            return;
+        }
+
         String trackingNumber = readInput("Enter Tracking Number [0 to Cancel]: ").toUpperCase();
         if (isCancel(trackingNumber)) {
             printCancelled();
@@ -460,6 +466,12 @@ public class Main {
         System.out.println("┌──────────────────────────────────────────────────┐");
         System.out.println("│               📬 MARK AS DELIVERED               │");
         System.out.println("└──────────────────────────────────────────────────┘");
+
+        if (parcelManager.isEmpty()) {
+            System.out.println("No parcels found in the system. Please add a parcel first.");
+            return;
+        }
+
         String trackingNumber = readInput("Enter Tracking Number [0 to Cancel]: ").toUpperCase();
         if (isCancel(trackingNumber)) {
             printCancelled();

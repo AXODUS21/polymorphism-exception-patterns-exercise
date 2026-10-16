@@ -86,6 +86,15 @@ public class ParcelManager {
     }
 
     /**
+     * Checks if there are no parcels registered in the system.
+     *
+     * @return true if empty, false otherwise
+     */
+    public synchronized boolean isEmpty() {
+        return parcelRepository.isEmpty();
+    }
+
+    /**
      * Changes the delivery service of a parcel.
      *
      * @param trackingNumber tracking number of the parcel

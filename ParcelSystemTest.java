@@ -255,10 +255,12 @@ public class ParcelSystemTest {
     private static void testParcelManagerOperations() {
         ParcelManager manager = ParcelManager.getInstance();
         manager.clear();
+        assertTrue(manager.isEmpty(), "Manager is empty after clear");
 
         try {
             DocumentParcel doc = new DocumentParcel("ABC0050", "Mia", 0.4, new StandardDeliveryStrategy(), 15);
             manager.addParcel(doc);
+            assertTrue(!manager.isEmpty(), "Manager is not empty after adding a parcel");
             assertTrue(manager.containsTrackingNumber("ABC0050"), "Manager contains ABC0050");
             assertTrue(manager.findParcel("ABC0050") == doc, "findParcel returns correct parcel");
 
